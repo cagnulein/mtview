@@ -52,6 +52,8 @@
 
 static int opcode;
 
+clock_t lastTouch;
+
 struct color {
 	float r, g, b;
 };
@@ -730,6 +732,8 @@ static void handle_xi2_event(Display *dpy, XEvent *e, struct touch_info *ti)
 		return;
 	}
 
+	lastTouch = clock();
+
 	/* store tracking ID in active */
 	touch->active = (ev->evtype != XI_TouchEnd);
 	touch->data[ABS_MT_POSITION_X] = ev->root_x;
@@ -788,6 +792,11 @@ static int run_mtdev_xi2(int deviceid)
 
 	while(1) {
 		XEvent xev;
+
+		if(((double)(clock() - lastTouch) / CLOCKS_PER_SEC) > 3) {
+			clear_screen(&touch_info, &w);
+		}
+		
 		XNextEvent(w.dsp, &xev);
 		if (xev.type == ConfigureNotify) {
 			set_screen_size_mtdev(&w, &xev);
