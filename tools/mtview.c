@@ -43,6 +43,7 @@
 #include <cairo-xlib.h>
 #include <getopt.h>
 #include <poll.h>
+#include <time.h>
 
 #define DEFAULT_WIDTH 200
 #define MIN_WIDTH 5
