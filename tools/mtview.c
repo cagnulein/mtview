@@ -770,12 +770,12 @@ static void handle_xi2_event(Display *dpy, XEvent *e, struct touch_info *ti)
 void *worker(void *data)
 {
 	while(1) {
+		sleep(3);
 		struct timeval now;
 		gettimeofday(&now, NULL);
 		if(now.tv_sec - lastTouch.tv_sec > 3) {
 			clear_screen(&touch_info, &w);
-		}
-		sleep(3);
+		}		
 	}
 	return NULL;
 }
@@ -784,9 +784,7 @@ static int run_mtdev_xi2(int deviceid)
 {
 	int major = 2, minor = 2;
 	XIEventMask mask;
-	unsigned char m[XIMaskLen(XI_LASTEVENT)] = {0};
-
-	pthread_create(&th1, NULL, worker, "X");
+	unsigned char m[XIMaskLen(XI_LASTEVENT)] = {0};	
 
 	if (init_window(&w)) {
 		error("Failed to open window.\n");
@@ -809,6 +807,8 @@ static int run_mtdev_xi2(int deviceid)
 	XISetMask(mask.mask, XI_TouchUpdate);
 	XISetMask(mask.mask, XI_TouchEnd);
 
+	pthread_create(&th1, NULL, worker, "X");
+	
 	while(1) {
 		XEvent xev;		
 		
