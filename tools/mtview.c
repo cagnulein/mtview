@@ -109,6 +109,9 @@ struct windata {
 	cairo_surface_t *surface_win;
 };
 
+struct windata w;
+struct touch_info touch_info = {0};
+
 static int error(const char *fmt, ...)
 {
 	va_list args;
@@ -780,8 +783,6 @@ void *worker(void *data)
 static int run_mtdev_xi2(int deviceid)
 {
 	int major = 2, minor = 2;
-	struct windata w;
-	struct touch_info touch_info = {0};
 	XIEventMask mask;
 	unsigned char m[XIMaskLen(XI_LASTEVENT)] = {0};
 
