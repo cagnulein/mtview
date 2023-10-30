@@ -766,10 +766,13 @@ static void handle_xi2_event(Display *dpy, XEvent *e, struct touch_info *ti)
 
 void *worker(void *data)
 {
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	if(now.tv_sec - lastTouch.tv_sec > 3) {
-		clear_screen(&touch_info, &w);
+	while(1) {
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		if(now.tv_sec - lastTouch.tv_sec > 3) {
+			clear_screen(&touch_info, &w);
+		}
+		sleep(3);
 	}
 	return NULL;
 }
