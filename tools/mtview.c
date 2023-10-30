@@ -44,6 +44,7 @@
 #include <getopt.h>
 #include <poll.h>
 #include <time.h>
+#include <pthread.h>
 
 #define DEFAULT_WIDTH 200
 #define MIN_WIDTH 5
@@ -53,7 +54,8 @@
 
 static int opcode;
 
-clock_t lastTouch;
+struct timeval lastTouch;
+pthread_t th1;
 
 struct color {
 	float r, g, b;
@@ -220,6 +222,8 @@ static void output_touch(const struct touch_info *touch_info,
 	cairo_restore(w->cr);
 
 	expose(w, x - mx/2, y - my/2, mx, my);
+
+	gettimeofday(&lastTouch, NULL);
 }
 
 static void report_frame(const struct touch_info *touch_info,
@@ -731,9 +735,7 @@ static void handle_xi2_event(Display *dpy, XEvent *e, struct touch_info *ti)
 	if (touch == NULL) {
 		msg("Too many simultaneous touches. Ignoring most-recent new contact.\n");
 		return;
-	}
-
-	lastTouch = clock();
+	}	
 
 	/* store tracking ID in active */
 	touch->active = (ev->evtype != XI_TouchEnd);
@@ -762,6 +764,16 @@ static void handle_xi2_event(Display *dpy, XEvent *e, struct touch_info *ti)
 	XFreeEventData(dpy, &e->xcookie);
 }
 
+void *worker(void *data)
+{
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	if(now.tv_sec - lastTouch.tv_sec > 3) {
+		clear_screen(&touch_info, &w);
+	}
+	return NULL;
+}
+
 static int run_mtdev_xi2(int deviceid)
 {
 	int major = 2, minor = 2;
@@ -769,6 +781,8 @@ static int run_mtdev_xi2(int deviceid)
 	struct touch_info touch_info = {0};
 	XIEventMask mask;
 	unsigned char m[XIMaskLen(XI_LASTEVENT)] = {0};
+
+	pthread_create(&th1, NULL, worker, "X");
 
 	if (init_window(&w)) {
 		error("Failed to open window.\n");
@@ -792,11 +806,7 @@ static int run_mtdev_xi2(int deviceid)
 	XISetMask(mask.mask, XI_TouchEnd);
 
 	while(1) {
-		XEvent xev;
-
-		if(((double)(clock() - lastTouch) / CLOCKS_PER_SEC) > 3) {
-			clear_screen(&touch_info, &w);
-		}
+		XEvent xev;		
 		
 		XNextEvent(w.dsp, &xev);
 		if (xev.type == ConfigureNotify) {
